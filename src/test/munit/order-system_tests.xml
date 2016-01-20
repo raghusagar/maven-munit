@@ -27,12 +27,23 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 	
 	<munit:test name="processOrders_internationalKeyReturnsInternationalOrders" description="The value of the map key international contains only international orders">
 		<munit:set
-			payload="#[[{'orderID':444, 'location':'international','price':14.01}, {'orderID':444, 'location':'international','price':14.01}]]"
+			payload="#[[{'orderID':444, 'location':'international','price':14.01}, {'orderID':444, 'location':'international','price':14.01}, {'orderID':555, 'location':'domestic','price':14.01}]]"
 			doc:name="Set Message" />
 		<flow-ref name="processOrders" doc:name="processOrders" />
 		<munit:assert-true condition="#[message.payload.'international'.size() &gt; 0]" doc:name="Assert Payload Type == Map" message="Expected payload to have at least one international order"/>
         <foreach collection="#[payload.'international']" doc:name="For Each">
             <munit:assert-on-equals message="item #[counter] location expected to be international but was #[payload.'location']" expectedValue="#['international']" actualValue="#[message.payload.'location']" doc:name="Assert 2 Items"/>
+        </foreach>
+	</munit:test>
+	
+	<munit:test name="processOrders_domesticKeyReturnsDomesticOrders" description="The value of the map key domestic contains only domestic orders">
+		<munit:set
+			payload="#[[{'orderID':444, 'location':'international','price':14.01}, {'orderID':444, 'location':'international','price':14.01}, {'orderID':555, 'location':'domestic','price':14.01}]]"
+			doc:name="Set Message" />
+		<flow-ref name="processOrders" doc:name="processOrders" />
+		<munit:assert-true condition="#[message.payload.'domestic'.size() &gt; 0]" doc:name="Assert Payload Type == Map" message="Expected payload to have at least one domestic order"/>
+        <foreach collection="#[payload.'domestic']" doc:name="For Each">
+            <munit:assert-on-equals message="item #[counter] location expected to be domestic but was #[payload.'location']" expectedValue="#['domestic']" actualValue="#[message.payload.'location']" doc:name="Assert 2 Items"/>
         </foreach>
 	</munit:test>
 
