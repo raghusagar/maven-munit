@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule 
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 
 xmlns="http://www.mulesoft.org/schema/mule/core" 
 xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" 
@@ -19,6 +19,15 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
 	
 	<ws:consumer-config name="orderSoapService" wsdlLocation="orders.wsdl" service="OrderServiceService" port="OrderServicePort"
 		serviceAddress="http://training-u.cloudhub.io/advanced/orders" doc:name="Web Service Consumer" />
+    <sub-flow name="retrieveOrders">
+        <set-variable variableName="dateRange" value="#[message.inboundProperties.'http.query.params'.range]" doc:name="dateRange"/>
+        <parse-template location="orderRequest.xml" doc:name="orderRequest"/>
+        <ws:consumer config-ref="orderSoapService" operation="provisionOrder" doc:name="SOAP provisionOrder"/>
+        <dw:transform-message doc:name="CDM">
+            <dw:input-payload doc:sample="provisionOrderResponse.xml"/>
+            <dw:set-payload resource="classpath:provision_order_cdm.dwl"/>
+        </dw:transform-message>
+    </sub-flow>
 
 	<flow name="processOrders">
 		<set-variable variableName="orders" value="#[message.payload]" doc:name="orders" />
@@ -37,15 +46,10 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
 }]]></expression-component>
 	</flow>
 
-	<flow name="retrieveOrders">
+	<flow name="main">
 		<http:listener config-ref="http8086" path="/" doc:name="HTTP" />
-		<set-variable variableName="dateRange" value="#[message.inboundProperties.'http.query.params'.range]" doc:name="dateRange" />
-		<parse-template location="orderRequest.xml" doc:name="orderRequest" />
-		<ws:consumer config-ref="orderSoapService" operation="provisionOrder" doc:name="SOAP provisionOrder" />
-		<dw:transform-message doc:name="CDM">
-			<dw:input-payload doc:sample="provisionOrderResponse.xml" />
-			<dw:set-payload resource="classpath:provision_order_cdm.dwl"></dw:set-payload>
-		</dw:transform-message>
+        <flow-ref name="retrieveOrders" doc:name="retrieveOrders"/>
+        <flow-ref name="processOrders" doc:name="processOrders"/>
 	</flow>
 
 </mule>
